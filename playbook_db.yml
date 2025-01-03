@@ -1,0 +1,100 @@
+---
+- name: Install and configure MariaDB on Ubuntu
+  hosts: all
+  become: true
+  vars:
+    mariadb_root_password: "9jKYgO*8$8c7xoncF@C2"
+    mariadb_bind_address: "0.0.0.0"  # Change to desired IP address for remote connections
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install python3 for mysql
+      apt:
+        name:  python3-pymysql
+        state: present        
+
+    - name: Install MariaDB server
+      apt:
+        name:  mariadb-server
+        state: present
+
+    - name: Start and enable MariaDB service
+      systemd:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Secure MariaDB installation
+      block:
+        - name: Set root password
+          mysql_user:
+            name: root
+            host: localhost
+            password: "{{ mariadb_root_password }}"
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+
+        - name: Configure MariaDB master
+          ansible.builtin.lineinfile:
+            path: /etc/mysql/mariadb.conf.d/50-server.cnf
+            regexp: '^server-id'
+            line: 'server-id=1'
+            state: present
+
+        - name: Enable binary logging on the master
+          ansible.builtin.lineinfile:
+            path: /etc/mysql/mariadb.conf.d/50-server.cnf
+            regexp: '^log_bin'
+            line: 'log_bin=/var/log/mysql/mysql-bin.log'
+            state: present
+
+        - name: Remove anonymous users
+          mysql_user:
+            name: ''
+            state: absent
+            host_all: yes
+            login_user: root
+            login_password: "{{ mariadb_root_password }}"
+
+        - name: Remove test database
+          mysql_db:
+            name: test
+            state: absent
+            login_user: root
+            login_password: "{{ mariadb_root_password }}"
+            login_user: root
+
+        - name: Create a new database with name 'wordpress'
+          community.mysql.mysql_db:
+            name: wordpress
+            state: present
+            login_user: root
+            login_password: "{{ mariadb_root_password }}"
+            login_unix_socket: /run/mysqld/mysqld.sock
+        
+        - name: Create wp_admin user with full access to wordpress database
+          community.mysql.mysql_user:
+            name: wp_admin
+            password: "genius"
+            priv: 'wordpress.*:ALL'
+            state: present
+            login_user: root
+            login_password: "{{ mariadb_root_password }}"
+            login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Update MariaDB bind address
+      lineinfile:
+        path: /etc/mysql/mariadb.conf.d/50-server.cnf
+        regexp: "^bind-address.*"
+        line: "bind-address = {{ mariadb_bind_address }}"
+        state: present
+      notify: Restart MariaDB
+
+  handlers:
+    - name: Restart MariaDB
+      systemd:
+        name: mariadb
+        state: restarted
+
