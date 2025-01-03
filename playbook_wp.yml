@@ -1,0 +1,17 @@
+---
+- name: Install and configure MariaDB on Ubuntu
+  hosts: all
+  become: true
+  vars:
+    mariadb_root_password: "9jKYgO*8$8c7xoncF@C2"
+    mariadb_bind_address: "0.0.0.0"  # Change to desired IP address for remote connections
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install python3 for mysql
+      apt:
+        name:  python3-pymysql
+        state: present
