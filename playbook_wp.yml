@@ -1,0 +1,60 @@
+---
+- name: Install and configure MariaDB on Ubuntu
+  hosts: all
+  become: true
+  vars:
+    mariadb_root_password: "9jKYgO*8$8c7xoncF@C2"
+    mariadb_bind_address: "0.0.0.0"  # Change to desired IP address for remote connections
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies for wordpress 
+      apt:
+        name:  
+          - apache2
+          - ghostscript
+          - libapache2-mod-php
+          - mysql-server
+          - php
+          - php-bcmath
+          - php-curl
+          - php-imagick
+          - php-intl
+          - php-json
+          - php-mbstring
+          - php-mysql
+          - php-xml
+          - php-zip
+          - curl
+        state: present
+
+    - name: Create folder /srv/www
+      file:
+        path: /srv/www
+        state: directory
+        mode: '0755'
+
+    - name: Change owner of /srv/www to www-data
+      file:
+        path: /srv/www
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Download latest WordPress
+      get_url:
+        url: https://wordpress.org/latest.tar.gz
+        dest: /srv/www/latest.tar.gz
+        owner: www-data
+        group: www-data
+
+    - name: Extract latest WordPress
+      unarchive:
+        src: /srv/www/latest.tar.gz
+        dest: /srv/www
+        remote_src: yes
+        owner: www-data
+        group: www-data
