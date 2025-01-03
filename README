@@ -1,7 +1,6 @@
-TAAK ooo
-# Project Title
+# WP Vagrant Fusion 
 
-A brief description of what this project does and who it's for
+VmWare FUSION at ARM M1 apple silicon. Vagrant will create 2 Ubuntu VM one for DB second for WordPress. 
 
 ## Installation
 
