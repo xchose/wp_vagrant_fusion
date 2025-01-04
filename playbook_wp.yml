@@ -29,6 +29,7 @@
           - php-xml
           - php-zip
           - curl
+          - wordpress
         state: present
 
     - name: Create folder /srv/www
@@ -58,3 +59,23 @@
         remote_src: yes
         owner: www-data
         group: www-data
+
+    - name: Copy wordpress.conf to /etc/apache2/sites-available/wordpress.conf
+      copy:
+        src: wordpress.conf
+        dest: /etc/apache2/sites-available/wordpress.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable wordpress site
+      command: sudo a2ensite wordpress
+
+    - name: Enable rewrite module
+      command: sudo a2enmod rewrite
+
+    - name: Disable default site
+      command: sudo a2dissite 000-default
+
+    - name: Disable default site
+      command: sudo service apache2 reload
